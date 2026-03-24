@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Employee Ideation Tool – Prototype</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#222;font-size:14px}
+  
+  #app{display:flex;height:100vh;overflow:hidden}
+  #sidebar{width:220px;background:#1a237e;color:#fff;display:flex;flex-direction:column;flex-shrink:0;transition:width .2s}
+  #sidebar.collapsed{width:56px}
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  #topbar{background:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;flex-shrink:0}
+  #content{flex:1;overflow-y:auto;padding:20px}
+  
+  .sidebar-logo{padding:16px 14px;font-size:15px;font-weight:700;background:#0d1b6e;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden}
+  .sidebar-logo span{transition:opacity .2s}
+  #sidebar.collapsed .sidebar-logo span{opacity:0;width:0;overflow:hidden}
+  .nav-section{padding:8px 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9fa8da;padding-left:14px;white-space:nowrap;overflow:hidden}
+  #sidebar.collapsed .nav-section{opacity:0}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;white-space:nowrap;overflow:hidden;border-left:3px solid transparent;transition:background .15s}
+  .nav-item:hover{background:rgba(255,255,255,.1)}
+  .nav-item.active{background:rgba(255,255,255,.15);border-left-color:#7986cb}
+  .nav-item .icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
+  .nav-item span{font-size:13px;transition:opacity .2s}
+  #sidebar.collapsed .nav-item span{opacity:0;width:0}
+  
+
+  .topbar-left{display:flex;align-items:center;gap:12px}
+  .page-title{font-size:16px;font-weight:600;color:#1a237e}
+  .topbar-right{display:flex;align-items:center;gap:12px}
+  .notif-bell{position:relative;cursor:pointer;font-size:20px}
+  .notif-badge{position:absolute;top:-4px;right:-4px;background:#f44336;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center}
+  .user-chip{display:flex;align-items:center;gap:8px;background:#e8eaf6;padding:5px 10px;border-radius:20px;cursor:pointer}
+  .avatar{width:28px;height:28px;border-radius:50%;background:#3f51b5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+  .role-badge{font-size:10px;background:#3f51b5;color:#fff;padding:2px 7px;border-radius:10px}
+  
+  .card{background:#fff;border-radius:8px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.1);margin-bottom:16px}
+  .card-title{font-size:14px;font-weight:600;color:#1a237e;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #eee}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .kpi-card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.1);border-left:4px solid #3f51b5}
+  .kpi-val{font-size:28px;font-weight:700;color:#1a237e}
+  .kpi-label{font-size:12px;color:#666;margin-top:2px}
+  .kpi-delta{font-size:11px;color:#43a047;margin-top:4px}
+  
+
+  table{width:100%;border-collapse:collapse}
+  th{background:#e8eaf6;color:#1a237e;font-size:12px;padding:8px 10px;text-align:left;font-weight:600}
+  td{padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:middle}
+  tr:hover td{background:#fafafa}
+  
+
+  .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+  .badge-submitted{background:#e3f2fd;color:#1565c0}
+  .badge-review{background:#fff8e1;color:#f57f17}
+  .badge-approved{background:#e8f5e9;color:#2e7d32}
+  .badge-rejected{background:#ffebee;color:#c62828}
+  .badge-implemented{background:#f3e5f5;color:#6a1b9a}
+  .badge-draft{background:#f5f5f5;color:#757575}
+  .badge-low{background:#e8f5e9;color:#2e7d32}
+  .badge-medium{background:#fff8e1;color:#f57f17}
+  .badge-high{background:#ffebee;color:#c62828}
+  .badge-employee{background:#e3f2fd;color:#1565c0}
+  .badge-manager{background:#e8f5e9;color:#2e7d32}
+  .badge-admin{background:#f3e5f5;color:#6a1b9a}
+  
+
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:opacity .15s}
+  .btn:hover{opacity:.85}
+  .btn-primary{background:#3f51b5;color:#fff}
+  .btn-success{background:#43a047;color:#fff}
+  .btn-danger{background:#e53935;color:#fff}
+  .btn-outline{background:#fff;border:1px solid #3f51b5;color:#3f51b5}
+  .btn-sm{padding:4px 10px;font-size:12px}
+  .btn-warning{background:#fb8c00;color:#fff}
+  
+
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px}
+  .form-control{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;color:#333;outline:none;transition:border .15s}
+  .form-control:focus{border-color:#3f51b5}
+  select.form-control{background:#fff}
+  textarea.form-control{resize:vertical;min-height:80px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  
+
+  .wizard-steps{display:flex;gap:0;margin-bottom:20px}
+  .w-step{flex:1;text-align:center;padding:8px 4px;font-size:12px;border-bottom:3px solid #ddd;color:#999;cursor:pointer}
+  .w-step.active{border-bottom-color:#3f51b5;color:#3f51b5;font-weight:600}
+  .w-step.done{border-bottom-color:#43a047;color:#43a047}
+  .wizard-body{min-height:280px}
+  .wizard-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #eee}
+
+  .timeline{padding:10px 0}
+  .tl-item{display:flex;gap:14px;margin-bottom:16px}
+  .tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+  .tl-dot-blue{background:#e3f2fd;color:#1565c0}
+  .tl-dot-green{background:#e8f5e9;color:#2e7d32}
+  .tl-dot-red{background:#ffebee;color:#c62828}
+  .tl-dot-orange{background:#fff8e1;color:#f57f17}
+  .tl-dot-purple{background:#f3e5f5;color:#6a1b9a}
+  .tl-body{}
+  .tl-title{font-size:13px;font-weight:600;color:#222}
+  .tl-meta{font-size:11px;color:#888;margin-top:2px}
+  .tl-comment{font-size:12px;color:#555;margin-top:4px;background:#fafafa;padding:6px 10px;border-radius:4px;border-left:3px solid #ddd}
+  
+
+  .bar-chart{display:flex;flex-direction:column;gap:8px}
+  .bar-row{display:flex;align-items:center;gap:8px}
+  .bar-label{width:80px;font-size:12px;color:#555;text-align:right;flex-shrink:0}
+  .bar-track{flex:1;height:18px;background:#f0f0f0;border-radius:9px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:9px;transition:width .5s}
+  .bar-val{width:36px;font-size:12px;color:#555;flex-shrink:0}
+  
+  .donut-wrapper{display:flex;align-items:center;gap:20px}
+  .donut-legend{display:flex;flex-direction:column;gap:6px}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  
+
+  .lb-row{display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid #f0f0f0}
+  .lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .rank-1{background:#ffd700;color:#7a5800}
+  .rank-2{background:#c0c0c0;color:#444}
+  .rank-3{background:#cd7f32;color:#fff}
+  .rank-n{background:#e8eaf6;color:#3f51b5}
+  .lb-name{flex:1;font-size:13px;font-weight:500}
+  .lb-dept{font-size:11px;color:#888}
+  .lb-points{font-size:15px;font-weight:700;color:#1a237e}
+  .lb-ideas{font-size:11px;color:#888;text-align:right}
+  .progress-bar{height:6px;background:#e8eaf6;border-radius:3px;margin-top:3px}
+  .progress-fill{height:100%;background:#3f51b5;border-radius:3px}
+  
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;display:none}
+  .modal-overlay.open{display:flex}
+  .modal{background:#fff;border-radius:10px;width:620px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;background:#f8f9fe}
+  .modal-title{font-size:15px;font-weight:700;color:#1a237e}
+  .modal-close{cursor:pointer;font-size:20px;color:#999;line-height:1}
+  .modal-body{padding:20px}
+  .modal-footer{padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:10px}
+  
+
+  .page{display:none}
+  .page.active{display:block}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .text-muted{color:#888;font-size:12px}
+  .text-center{text-align:center}
+  .mt-8{margin-top:8px}
+  .mb-8{margin-bottom:8px}
+  .tag{display:inline-block;padding:2px 8px;background:#e8eaf6;color:#3f51b5;border-radius:10px;font-size:11px;margin:2px}
+  .alert{padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px}
+  .alert-info{background:#e3f2fd;color:#1565c0;border-left:4px solid #1976d2}
+  .alert-success{background:#e8f5e9;color:#2e7d32;border-left:4px solid #43a047}
+  .alert-warning{background:#fff8e1;color:#f57f17;border-left:4px solid #fb8c00}
+  .ai-panel{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:8px;padding:14px;border:1px solid #c5cae9}
+  .ai-panel-title{font-size:12px;font-weight:700;color:#3f51b5;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .score-circle{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;border:3px solid #3f51b5;font-size:18px;font-weight:700;color:#1a237e;background:#fff}
+  .impact-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .impact-chip{padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;border:1px solid #ddd;background:#fff;transition:all .15s}
+  .impact-chip.selected{background:#3f51b5;color:#fff;border-color:#3f51b5}
+  .upload-zone{border:2px dashed #c5cae9;border-radius:8px;padding:20px;text-align:center;color:#9fa8da;cursor:pointer;transition:all .15s}
+  .upload-zone:hover{border-color:#3f51b5;background:#f8f9fe}
+  .notification-panel{position:absolute;top:48px;right:70px;width:300px;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:200;display:none}
+  .notification-panel.open{display:block}
+  .notif-item{padding:12px 14px;border-bottom:1px solid #f0f0f0;cursor:pointer}
+  .notif-item:hover{background:#f8f9fe}
+  .notif-item.unread{border-left:3px solid #3f51b5}
+  .notif-item-title{font-size:13px;font-weight:500}
+  .notif-item-meta{font-size:11px;color:#888;margin-top:2px}
+  .login-wrap{min-height:100vh;background:linear-gradient(135deg,#1a237e,#3f51b5);display:flex;align-items:center;justify-content:center}
+  .login-card{background:#fff;border-radius:12px;padding:36px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .login-logo{text-align:center;margin-bottom:24px}
+  .login-logo h2{font-size:20px;color:#1a237e;margin-top:8px}
+  .login-logo p{font-size:12px;color:#888}
+  .separator{height:1px;background:#eee;margin:14px 0}
+  .role-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .role-option{border:2px solid #ddd;border-radius:8px;padding:10px;text-align:center;cursor:pointer;transition:all .15s}
+  .role-option:hover{border-color:#3f51b5}
+  .role-option.selected{border-color:#3f51b5;background:#e8eaf6}
+  .role-option .role-icon{font-size:24px;margin-bottom:4px}
+  .role-option .role-name{font-size:12px;font-weight:600;color:#1a237e}
+  .sidebar-user{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;margin-top:auto;overflow:hidden}
+  .sidebar-user-info span{font-size:12px;opacity:.8;display:block;white-space:nowrap;transition:opacity .2s}
+  #sidebar.collapsed .sidebar-user-info span{opacity:0;width:0;overflow:hidden}
+  .points-badge{background:#ffd700;color:#7a5800;font-size:11px;font-weight:700;padding:1px 6px;border-radius:8px}
+  .idea-card{background:#fff;border-radius:8px;border:1px solid #e8eaf6;padding:14px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+  .idea-card:hover{box-shadow:0 2px 12px rgba(63,81,181,.15)}
+  .idea-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .idea-card-id{font-size:10px;color:#9fa8da;font-weight:600}
+  .idea-card-title{font-size:14px;font-weight:600;color:#1a237e;margin-top:2px}
+  .idea-card-meta{font-size:11px;color:#888;margin-top:6px}
+  .idea-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+  .toggle-btn{background:none;border:none;cursor:pointer;font-size:18px;color:#9fa8da;padding:2px}
+  .filter-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .filter-bar input,.filter-bar select{padding:6px 10px;border:1px solid #ddd;border-radius:5px;font-size:13px;outline:none}
+  .tabs{display:flex;border-bottom:2px solid #e8eaf6;margin-bottom:16px}
+  .tab{padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.active{color:#3f51b5;border-bottom-color:#3f51b5}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .chip-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #ddd;background:#fff}
+  .chip.active{background:#3f51b5;color:#fff;border-color:#3f51b5}
+  .tooltip{position:relative;display:inline-block}
+  .tooltip-text{visibility:hidden;background:#333;color:#fff;text-align:center;border-radius:4px;padding:4px 8px;position:absolute;z-index:1;bottom:125%;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap}
+  .tooltip:hover .tooltip-text{visibility:visible}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .ai-loading{animation:pulse 1.5s infinite;color:#9fa8da;font-size:12px}
+  .mini-stat{display:flex;flex-direction:column;align-items:center;padding:10px;background:#f8f9fe;border-radius:8px;flex:1}
+  .mini-stat-val{font-size:20px;font-weight:700;color:#1a237e}
+  .mini-stat-label{font-size:11px;color:#888;margin-top:2px;text-align:center}
+</style>
+</head>
+<body>
+
+
+<div id="login-page" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="font-size:36px"></div>
+      <h2>Employee Ideation Tool</h2>
+      <p>Enterprise Innovation Workflow System</p>
+    </div>
+    <p style="font-size:12px;color:#888;margin-bottom:10px;text-align:center">Select role to preview prototype:</p>
+    <div class="role-select-grid">
+      <div class="role-option selected" onclick="selectRole(this,'employee','Yashas R','Employee')">
+        <div class="role-icon"></div>
+        <div class="role-name">Employee</div>
+      </div>
+      <div class="role-option" onclick="selectRole(this,'manager','Priya Sharma','Manager')">
+        <div class="role-icon"></div>
+        <div class="role-name">Manager</div>
+      </div>
+      <div class="role-option" onclick="selectRole(this,'admin','Bhuvan K H','Admin')">
+        <div class="role-icon"></div>
+        <div class="role-name">Admin</div>
+      </div>
+      <div class="role-option" onclick="selectRole(this,'executive','Adrish Chowdhury','Executive')">
+        <div class="role-icon"></div>
+        <div class="role-name">Executive</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input class="form-control" id="login-email" value="yashas.r@company.com" readonly/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input class="form-control" type="password" value="••••••••" readonly/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()"> Login to System</button>
+    <div class="separator"></div>
+    <p class="text-muted text-center" style="font-size:11px"> JWT Authentication · Role-Based Access Control · AES-256 Encrypted</p>
+  </div>
+</div>
+
+
+<div id="main-app" style="display:none;height:100vh">
+<div id="app">
+
+
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <span style="font-size:20px;flex-shrink:0"></span>
+      <span>IdeaTool</span>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="navigate('dashboard',this)"><span class="icon"></span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="navigate('my-ideas',this)"><span class="icon"></span><span>My Ideas</span></div>
+    <div class="nav-item" id="nav-submit" onclick="navigate('submit',this)"><span class="icon"></span><span>Submit Idea</span></div>
+
+    <div class="nav-section">Workflow</div>
+    <div class="nav-item" id="nav-review" onclick="navigate('review',this)"><span class="icon"></span><span>Review Queue</span></div>
+    <div class="nav-item" onclick="navigate('ideas-all',this)"><span class="icon"></span><span>All Ideas</span></div>
+    <div class="nav-item" onclick="navigate('audit',this)"><span class="icon"></span><span>Audit Trail</span></div>
+
+    <div class="nav-section">Insights</div>
+    <div class="nav-item" onclick="navigate('leaderboard',this)"><span class="icon"></span><span>Leaderboard</span></div>
+    <div class="nav-item" id="nav-analytics" onclick="navigate('analytics',this)"><span class="icon"></span><span>Analytics</span></div>
+
+    <div class="nav-section" id="nav-admin-section">Admin</div>
+    <div class="nav-item" id="nav-admin" onclick="navigate('admin',this)"><span class="icon"></span><span>User Management</span></div>
+
+    <div class="sidebar-user">
+      <div class="avatar" id="sb-avatar">YR</div>
+      <div class="sidebar-user-info">
+        <span id="sb-name" style="font-size:13px;font-weight:600">Yashas R</span>
+        <span id="sb-role">Employee</span>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-left">
+        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        <div class="page-title" id="page-title">Dashboard</div>
+      </div>
+      <div class="topbar-right" style="position:relative">
+        <div class="notif-bell" onclick="toggleNotif()">
+          <span class="notif-badge" id="notif-count">3</span>
+        </div>
+        <div class="notification-panel" id="notif-panel">
+          <div style="padding:10px 14px;font-weight:600;font-size:13px;border-bottom:1px solid #eee;display:flex;justify-content:space-between">
+            Notifications <span style="color:#3f51b5;cursor:pointer;font-size:12px" onclick="markAllRead()">Mark all read</span>
+          </div>
+          <div class="notif-item unread">
+            <div class="notif-item-title">✅ Idea #IDA-2024-042 Approved</div>
+            <div class="notif-item-meta">Your idea "Reduce rework in Q3 line" was approved by Priya Sharma · 2h ago</div>
+          </div>
+          <div class="notif-item unread">
+            <div class="notif-item-title">🏅 Badge Earned: Quick Thinker</div>
+            <div class="notif-item-meta">You submitted 3 ideas this month · 1d ago</div>
+          </div>
+          <div class="notif-item unread">
+            <div class="notif-item-title">⭐ 25 Points Credited</div>
+            <div class="notif-item-meta">For approved idea #IDA-2024-042 · 2h ago</div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-item-title">📋 Idea Under Review</div>
+            <div class="notif-item-meta">Idea #IDA-2024-051 assigned to reviewer · 3d ago</div>
+          </div>
+        </div>
+        <div class="user-chip" onclick="navigate('profile',null)">
+          <div class="avatar" id="top-avatar">YR</div>
+          <span id="top-name">Yashas R</span>
+          <span class="role-badge" id="top-role-badge">Employee</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div id="content">
+
+
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-left-color:#3f51b5">
+            <div class="kpi-val">48</div>
+            <div class="kpi-label"> Total Ideas (2024)</div>
+            <div class="kpi-delta">▲ +12% vs last year</div>
+          </div>
+          <div class="kpi-card" style="border-left-color:#43a047">
+            <div class="kpi-val">31</div>
+            <div class="kpi-label"> Approved Ideas</div>
+            <div class="kpi-delta">▲ 64.6% approval rate</div>
+          </div>
+          <div class="kpi-card" style="border-left-color:#f57c00">
+            <div class="kpi-val">19</div>
+            <div class="kpi-label"> Implemented</div>
+            <div class="kpi-delta">▲ 39.6% implementation rate</div>
+          </div>
+          <div class="kpi-card" style="border-left-color:#7b1fa2">
+            <div class="kpi-val">24</div>
+            <div class="kpi-label"> Active Contributors</div>
+            <div class="kpi-delta">▲ +4 new this month</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"> Monthly Submission Trend</div>
+            <div class="bar-chart">
+              <div class="bar-row"><span class="bar-label">Jan</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:#3f51b5"></div></div><span class="bar-val">3</span></div>
+              <div class="bar-row"><span class="bar-label">Feb</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:#3f51b5"></div></div><span class="bar-val">4</span></div>
+              <div class="bar-row"><span class="bar-label">Mar</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:#3f51b5"></div></div><span class="bar-val">6</span></div>
+              <div class="bar-row"><span class="bar-label">Apr</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#3f51b5"></div></div><span class="bar-val">5</span></div>
+              <div class="bar-row"><span class="bar-label">May</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:#5c6bc0"></div></div><span class="bar-val">7</span></div>
+              <div class="bar-row"><span class="bar-label">Jun</span><div class="bar-track"><div class="bar-fill" style="width:80%;background:#5c6bc0"></div></div><span class="bar-val">8</span></div>
+              <div class="bar-row"><span class="bar-label">Jul</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#7986cb"></div></div><span class="bar-val">5</span></div>
+              <div class="bar-row"><span class="bar-label">Aug</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#7986cb"></div></div><span class="bar-val">10</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"> Status Distribution</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span> Approved / Implemented</span><span style="font-weight:600">31</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:65%;background:#43a047"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span> Under Review</span><span style="font-weight:600">9</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:19%;background:#fb8c00"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span> Submitted</span><span style="font-weight:600">4</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:8%;background:#1976d2"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span> Rejected</span><span style="font-weight:600">4</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:8%;background:#e53935"></div></div>
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <div class="card-title"> Impact Areas Frequency</div>
+              <div class="bar-chart" style="margin-top:8px">
+                <div class="bar-row"><span class="bar-label" style="width:90px">Quality</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:#3f51b5"></div></div><span class="bar-val">22</span></div>
+                <div class="bar-row"><span class="bar-label" style="width:90px">Cost</span><div class="bar-track"><div class="bar-fill" style="width:75%;background:#5c6bc0"></div></div><span class="bar-val">18</span></div>
+                <div class="bar-row"><span class="bar-label" style="width:90px">Safety</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:#7986cb"></div></div><span class="bar-val">13</span></div>
+                <div class="bar-row"><span class="bar-label" style="width:90px">Production</span><div class="bar-track"><div class="bar-fill" style="width:48%;background:#9fa8da"></div></div><span class="bar-val">12</span></div>
+                <div class="bar-row"><span class="bar-label" style="width:90px">Morale</span><div class="bar-track"><div class="bar-fill" style="width:35%;background:#c5cae9"></div></div><span class="bar-val">8</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"> Top Contributors (This Month)</div>
+            <div class="lb-row">
+              <div class="lb-rank rank-1">1</div>
+              <div class="avatar" style="background:#3f51b5">YR</div>
+              <div style="flex:1"><div class="lb-name">Yashas R</div><div class="lb-dept">Manufacturing · QA Dept</div></div>
+              <div><div class="lb-points">185 pts</div><div class="lb-ideas">6 ideas</div></div>
+            </div>
+            <div class="lb-row">
+              <div class="lb-rank rank-2">2</div>
+              <div class="avatar" style="background:#e91e63">AC</div>
+              <div style="flex:1"><div class="lb-name">Arjun Chopra</div><div class="lb-dept">Production Dept</div></div>
+              <div><div class="lb-points">160 pts</div><div class="lb-ideas">5 ideas</div></div>
+            </div>
+            <div class="lb-row">
+              <div class="lb-rank rank-3">3</div>
+              <div class="avatar" style="background:#009688">MS</div>
+              <div style="flex:1"><div class="lb-name">Meena S</div><div class="lb-dept">Safety & Environment</div></div>
+              <div><div class="lb-points">140 pts</div><div class="lb-ideas">4 ideas</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📬 Recent Activity</div>
+            <div class="timeline">
+              <div class="tl-item">
+                <div class="tl-dot tl-dot-green">✅</div>
+                <div><div class="tl-title">Idea #IDA-2024-042 Approved</div><div class="tl-meta">by Priya Sharma · 2 hours ago</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot tl-dot-blue">📬</div>
+                <div><div class="tl-title">Idea #IDA-2024-051 Submitted</div><div class="tl-meta">by Rahul Mehta · 5 hours ago</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot tl-dot-purple">🚀</div>
+                <div><div class="tl-title">Idea #IDA-2024-038 Implemented</div><div class="tl-meta">by BU Head · Yesterday</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot tl-dot-orange">🔍</div>
+                <div><div class="tl-title">Idea #IDA-2024-049 Under Review</div><div class="tl-meta">Assigned to Dept Head · Yesterday</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-my-ideas">
+        <div class="section-header">
+          <div>
+            <div class="page-title">My Ideas</div>
+            <div class="text-muted">Track all ideas you have submitted</div>
+          </div>
+          <button class="btn btn-primary" onclick="navigate('submit',document.getElementById('nav-submit'))"> New Idea</button>
+        </div>
+        <div class="filter-bar">
+          <input placeholder=" Search ideas..." style="flex:1;min-width:180px"/>
+          <select class="form-control" style="width:140px">
+            <option>All Status</option><option>Draft</option><option>Submitted</option><option>Under Review</option><option>Approved</option><option>Rejected</option><option>Implemented</option>
+          </select>
+          <select class="form-control" style="width:130px">
+            <option>All Impact</option><option>Low</option><option>Medium</option><option>High</option>
+          </select>
+        </div>
+
+        <div class="idea-card" onclick="openIdeaDetail('IDA-2024-042')">
+          <div class="idea-card-header">
+            <div>
+              <div class="idea-card-id">#IDA-2024-042</div>
+              <div class="idea-card-title">Reduce rework percentage in Q3 production line</div>
+            </div>
+            <span class="badge badge-approved"> Approved</span>
+          </div>
+          <div class="idea-card-meta"> Quality, Cost ·  Co-suggester: Arjun Chopra ·  12 Aug 2024</div>
+          <div class="idea-card-footer">
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-medium">Medium Impact</span>
+              <span class="tag">AI Score: 88/100</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="points-badge">+35 pts</span>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openIdeaDetail('IDA-2024-042')">View Details →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="idea-card" onclick="openIdeaDetail('IDA-2024-051')">
+          <div class="idea-card-header">
+            <div>
+              <div class="idea-card-id">#IDA-2024-051</div>
+              <div class="idea-card-title">Automated safety checklist before shift start using QR scan</div>
+            </div>
+            <span class="badge badge-review"> Under Review</span>
+          </div>
+          <div class="idea-card-meta"> Safety, Environment ·  29 Aug 2024</div>
+          <div class="idea-card-footer">
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-high">High Impact</span>
+              <span class="tag">AI Score: 91/100</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="points-badge">+10 pts</span>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openIdeaDetail('IDA-2024-051')">View Details →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="idea-card" onclick="openIdeaDetail('IDA-2024-035')">
+          <div class="idea-card-header">
+            <div>
+              <div class="idea-card-id">#IDA-2024-035</div>
+              <div class="idea-card-title">Energy monitoring dashboard for all machines on shopfloor</div>
+            </div>
+            <span class="badge badge-implemented"> Implemented</span>
+          </div>
+          <div class="idea-card-meta"> Cost, Environment ·  5 Jul 2024</div>
+          <div class="idea-card-footer">
+            <div style="display:flex;gap:6px">
+              <span class="badge badge-high">High Impact</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="points-badge">+100 pts</span>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openIdeaDetail('IDA-2024-035')">View Details →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="idea-card">
+          <div class="idea-card-header">
+            <div>
+              <div class="idea-card-id">#IDA-2024-028</div>
+              <div class="idea-card-title">Introduce buddy system for new joinees onboarding</div>
+            </div>
+            <span class="badge badge-rejected"> Rejected</span>
+          </div>
+          <div class="idea-card-meta"> Morale, Delivery ·  18 Jun 2024</div>
+          <div class="idea-card-footer">
+            <div><span class="badge badge-low">Low Impact</span></div>
+            <button class="btn btn-outline btn-sm">Revise & Resubmit</button>
+          </div>
+        </div>
+
+        <div class="idea-card">
+          <div class="idea-card-header">
+            <div>
+              <div class="idea-card-id">#DRAFT-005</div>
+              <div class="idea-card-title">Predictive maintenance schedule using sensor data</div>
+            </div>
+            <span class="badge badge-draft"> Draft</span>
+          </div>
+          <div class="idea-card-meta"> Production, Quality · Last edited: Today</div>
+          <div class="idea-card-footer">
+            <div></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline btn-sm" onclick="navigate('submit',document.getElementById('nav-submit'))"> Continue Editing</button>
+              <button class="btn btn-primary btn-sm">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-submit">
+        <div class="section-header">
+          <div>
+            <div class="page-title">Submit New Idea</div>
+            <div class="text-muted">Fill in all steps to submit your improvement idea</div>
+          </div>
+        </div>
+        <div class="card">
+          
+          <div class="alert alert-info" style="margin-bottom:16px">
+            <strong>🔗 Auto-fetched from HR Database:</strong> Yashas R · EMP-2021-0341 · QA Department · Reporting to: Priya Sharma · Unit: Mysuru Plant
+          </div>
+
+         
+          <div class="wizard-steps" id="wizard-steps">
+            <div class="w-step active" onclick="goStep(1)">1. Situation</div>
+            <div class="w-step" onclick="goStep(2)">2. Solution</div>
+            <div class="w-step" onclick="goStep(3)">3. Impact</div>
+            <div class="w-step" onclick="goStep(4)">4. Co-Suggesters</div>
+            <div class="w-step" onclick="goStep(5)">5. Review & Submit</div>
+          </div>
+
+          
+          <div class="wizard-body" id="step-1">
+            <h3 style="font-size:14px;color:#1a237e;margin-bottom:12px">📋 Step 1: Describe the Present Situation</h3>
+            <div class="form-group">
+              <label>Situation Title <span style="color:red">*</span></label>
+              <input class="form-control" id="idea-title" placeholder="Brief title for your idea (e.g. Reduce rework in line 3)" value="Automated safety checklist before shift start using QR scan"/>
+            </div>
+            <div class="form-group">
+              <label>Current Situation Description <span style="color:red">*</span> <span class="text-muted">(min. 50 chars)</span></label>
+              <textarea class="form-control" rows="5" placeholder="Describe the current problem or inefficiency in detail...">Currently, safety checklists before each shift are done manually on paper forms. This leads to incomplete entries, delays in shift start, and difficulty in tracking compliance. Missing entries are only noticed during audits, by which time it is too late to take corrective action.</textarea>
+            </div>
+            <div class="form-group">
+              <label>📎 Supporting Document (Optional)</label>
+              <div class="upload-zone" onclick="alert('File upload: Supported formats — PDF, PNG, JPG, XLSX (max 10MB)')">
+                📁 Click to upload or drag & drop<br/><span style="font-size:11px;color:#bbb">PDF, PNG, JPG, XLSX — Max 10 MB</span>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="wizard-body" id="step-2" style="display:none">
+            <h3 style="font-size:14px;color:#1a237e;margin-bottom:12px"> Step 2: Proposed Idea / Solution</h3>
+            <div class="alert alert-info ai-loading" id="ai-suggest-label" style="display:none">
+               AI is analysing your text for clarity suggestions...
+            </div>
+            <div class="form-group">
+              <label>Proposed Solution <span style="color:red">*</span></label>
+              <textarea class="form-control" rows="5" id="solution-text" placeholder="Describe your proposed improvement in detail..." oninput="triggerAIHint()">Implement a QR-code based digital safety checklist accessible via any smartphone. Each workstation gets a QR sticker. Workers scan before shift start; form auto-submits with timestamp and employee ID. Non-compliance alerts supervisor instantly via the app. Checklist data is stored centrally for real-time compliance tracking and audit reports.</textarea>
+            </div>
+            <div class="ai-panel" id="ai-hint-panel">
+              <div class="ai-panel-title"> AI Clarity Suggestions (Real-time)</div>
+              <ul style="font-size:12px;color:#333;padding-left:16px;line-height:1.8">
+                <li>Consider quantifying expected compliance improvement (e.g., "from 65% to 98%")</li>
+                <li>Mention estimated cost to deploy QR infrastructure</li>
+                <li>Add rollout plan: pilot department before full deployment</li>
+              </ul>
+            </div>
+            <div class="form-group mt-8">
+              <label>📎 Supporting Document (Optional)</label>
+              <div class="upload-zone"> Click to upload or drag & drop<br/><span style="font-size:11px;color:#bbb">PDF, PNG, JPG, XLSX — Max 10 MB</span></div>
+            </div>
+          </div>
+
+          
+          <div class="wizard-body" id="step-3" style="display:none">
+            <h3 style="font-size:14px;color:#1a237e;margin-bottom:12px"> Step 3: Impact Areas & Measurable Benefits</h3>
+            <div class="form-group">
+              <label>Select Impact Areas <span style="color:red">*</span> (select all that apply)</label>
+              <div class="impact-grid" style="margin-top:8px">
+                <div class="impact-chip" onclick="toggleImpact(this)"> Production</div>
+                <div class="impact-chip" onclick="toggleImpact(this)"> Quality</div>
+                <div class="impact-chip" onclick="toggleImpact(this)"> Cost</div>
+                <div class="impact-chip" onclick="toggleImpact(this)"> Delivery</div>
+                <div class="impact-chip selected" onclick="toggleImpact(this)"> Safety</div>
+                <div class="impact-chip selected" onclick="toggleImpact(this)"> Environment</div>
+                <div class="impact-chip" onclick="toggleImpact(this)"> Morale</div>
+              </div>
+            </div>
+            <div class="ai-panel" style="margin:12px 0">
+              <div class="ai-panel-title"> AI Suggested Impact Areas</div>
+              <p style="font-size:12px;color:#333;">Based on your idea text, AI suggests: <strong>Safety (93% confidence), Environment (78%), Morale (61%)</strong></p>
+              <p style="font-size:11px;color:#666;margin-top:4px">Your selection: Safety ✅ Environment ✅ — matches AI suggestion</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tangible Benefit (Optional)</label>
+                <input class="form-control" placeholder="e.g. 50000" value="45000"/>
+              </div>
+              <div class="form-group">
+                <label>Unit of Measure</label>
+                <select class="form-control">
+                  <option>₹ INR (savings)</option><option>Hours saved/month</option><option>% reduction</option><option>Units</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Intangible Benefits (Optional)</label>
+              <input class="form-control" value="Improved worker confidence, better audit scores, reduced injury risk"/>
+            </div>
+            <div class="alert alert-success mt-8">
+               <strong>AI Benefit Estimate:</strong> Estimated cost savings of ₹40,000–60,000/year from reduced incidents and faster audits. Risk reduction value: High.
+            </div>
+          </div>
+
+          
+          <div class="wizard-body" id="step-4" style="display:none">
+            <h3 style="font-size:14px;color:#1a237e;margin-bottom:12px"> Step 4: Co-Suggesters (Optional, max 2)</h3>
+            <div class="alert alert-info">Co-suggesters also receive points when this idea is approved or implemented.</div>
+            <div class="form-group" style="margin-top:12px">
+              <label>Search Co-Suggester 1</label>
+              <input class="form-control" placeholder="Search by name or employee ID..." value="Rahul Mehta"/>
+              <div style="background:#f8f9fe;border:1px solid #ddd;border-radius:5px;padding:8px;margin-top:4px;font-size:13px">
+                ✅ <strong>Rahul Mehta</strong> · EMP-2022-0187 · Safety Dept · rahul.mehta@company.com
+                <span style="float:right;cursor:pointer;color:#e53935">✕ Remove</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Search Co-Suggester 2</label>
+              <input class="form-control" placeholder="Search by name or employee ID..."/>
+              <div style="font-size:11px;color:#888;margin-top:4px">Type at least 3 characters to search employees</div>
+            </div>
+          </div>
+
+          
+          <div class="wizard-body" id="step-5" style="display:none">
+            <h3 style="font-size:14px;color:#1a237e;margin-bottom:12px"> Step 5: Review & Submit</h3>
+            <div class="grid-2" style="margin-bottom:12px">
+              <div class="card" style="padding:12px;margin-bottom:0">
+                <div class="card-title" style="margin-bottom:8px">Idea Summary</div>
+                <div style="font-size:13px;line-height:1.8">
+                  <div><strong>Title:</strong> Automated safety checklist via QR scan</div>
+                  <div><strong>Submitted by:</strong> Yashas R (EMP-2021-0341)</div>
+                  <div><strong>Department:</strong> QA · Mysuru Plant</div>
+                  <div><strong>Co-Suggester:</strong> Rahul Mehta</div>
+                  <div><strong>Impact Areas:</strong>  Safety,  Environment</div>
+                  <div><strong>Impact Level:</strong> <span class="badge badge-high">HIGH</span></div>
+                  <div><strong>Attachments:</strong> None</div>
+                </div>
+              </div>
+              <div class="ai-panel">
+                <div class="ai-panel-title"> AI Pre-Submission Analysis</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                  <div class="score-circle">91</div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#1a237e">Quality Score: 91/100</div>
+                    <div style="font-size:11px;color:#666">Excellent clarity and feasibility</div>
+                  </div>
+                </div>
+                <div style="font-size:12px;color:#333;line-height:1.7">
+                   Well-defined problem statement<br/>
+                   Clear, implementable solution<br/>
+                   Safety impact well-articulated<br/>
+                   Could add pilot plan details<br/>
+                   No duplicate ideas found
+                </div>
+                <div style="margin-top:8px;font-size:11px;color:#888">Routing: Manager → Dept Head → BU Head (High Impact)</div>
+              </div>
+            </div>
+            <div class="alert alert-warning"> Once submitted, this idea will be routed for review. You can only edit it while in Draft status.</div>
+            <div class="wizard-footer" style="justify-content:space-between">
+              <button class="btn btn-outline" onclick="goStep(4)">← Back</button>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-outline"> Save as Draft</button>
+                <button class="btn btn-success" onclick="submitIdea()"> Submit Idea</button>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="wizard-footer" id="wizard-nav" style="justify-content:space-between">
+            <button class="btn btn-outline" id="btn-back" onclick="prevStep()" style="visibility:hidden">← Back</button>
+            <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Next →</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-review">
+        <div class="section-header">
+          <div>
+            <div class="page-title">Review Queue</div>
+            <div class="text-muted">Ideas pending your approval</div>
+          </div>
+          <span class="badge badge-review" style="font-size:13px;padding:5px 12px">4 Pending</span>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'rtab1')"> Pending Review (4)</div>
+          <div class="tab" onclick="switchTab(this,'rtab2')"> Reviewed (12)</div>
+          <div class="tab" onclick="switchTab(this,'rtab3')"> Escalated (1)</div>
+        </div>
+
+        <div class="tab-content active" id="rtab1">
+          <table>
+            <thead><tr><th>Idea ID</th><th>Title</th><th>Submitter</th><th>Impact</th><th>AI Score</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>#IDA-2024-053</strong></td>
+                <td>Install LED lighting in warehouse to reduce energy cost</td>
+                <td>Arjun Chopra<br/><span class="text-muted">Production Dept</span></td>
+                <td><span class="badge badge-medium">Medium</span><br/><span class="tag">Cost</span><span class="tag">Environment</span></td>
+                <td><span class="score-circle" style="width:36px;height:36px;font-size:13px">78</span></td>
+                <td>1 Sep 2024</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openReviewModal('IDA-2024-053')">Review</button></td>
+              </tr>
+              <tr>
+                <td><strong>#IDA-2024-052</strong></td>
+                <td>Standardize packaging process to reduce material wastage</td>
+                <td>Meena S<br/><span class="text-muted">Safety Dept</span></td>
+                <td><span class="badge badge-high">High</span><br/><span class="tag">Quality</span><span class="tag">Cost</span></td>
+                <td><span class="score-circle" style="width:36px;height:36px;font-size:13px">85</span></td>
+                <td>30 Aug 2024</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openReviewModal('IDA-2024-052')">Review</button></td>
+              </tr>
+              <tr>
+                <td><strong>#IDA-2024-051</strong></td>
+                <td>Automated safety checklist before shift start using QR scan</td>
+                <td>Yashas R<br/><span class="text-muted">QA Dept</span></td>
+                <td><span class="badge badge-high">High</span><br/><span class="tag">Safety</span><span class="tag">Environment</span></td>
+                <td><span class="score-circle" style="width:36px;height:36px;font-size:13px">91</span></td>
+                <td>29 Aug 2024</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openReviewModal('IDA-2024-051')">Review</button></td>
+              </tr>
+              <tr>
+                <td><strong>#IDA-2024-050</strong></td>
+                <td>Digital display boards for real-time production target vs actual</td>
+                <td>Kiran D<br/><span class="text-muted">Production Dept</span></td>
+                <td><span class="badge badge-medium">Medium</span><br/><span class="tag">Production</span><span class="tag">Morale</span></td>
+                <td><span class="score-circle" style="width:36px;height:36px;font-size:13px">72</span></td>
+                <td>27 Aug 2024</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openReviewModal('IDA-2024-050')">Review</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="rtab2">
+          <table>
+            <thead><tr><th>Idea ID</th><th>Title</th><th>Status</th><th>Decision</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr><td>#IDA-2024-042</td><td>Reduce rework in Q3 production line</td><td><span class="badge badge-approved">Approved</span></td><td>Approved with bonus — excellent impact</td><td>12 Aug</td></tr>
+              <tr><td>#IDA-2024-039</td><td>Preventive maintenance checklist for CNC machines</td><td><span class="badge badge-implemented">Implemented</span></td><td>Approved and implemented</td><td>5 Aug</td></tr>
+              <tr><td>#IDA-2024-033</td><td>Buddy system for new employee onboarding</td><td><span class="badge badge-rejected">Rejected</span></td><td>Not aligned with current priorities</td><td>25 Jul</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="rtab3">
+          <div class="alert alert-warning">1 idea has been escalated to you from a lower reviewer due to cross-department impact.</div>
+          <table>
+            <thead><tr><th>Idea ID</th><th>Title</th><th>Escalated By</th><th>Reason</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>#IDA-2024-047</strong></td>
+                <td>Cross-department tool sharing system to reduce procurement cost</td>
+                <td>Priya Sharma (Manager)</td>
+                <td>Cross-department scope — needs BU-level approval</td>
+                <td><button class="btn btn-warning btn-sm" onclick="openReviewModal('IDA-2024-047')">Review Escalation</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-ideas-all">
+        <div class="section-header">
+          <div class="page-title">All Ideas</div>
+          <button class="btn btn-outline btn-sm" onclick="alert('Export: Excel & PDF report generation via Apache POI / JasperReports')"> Export Report</button>
+        </div>
+        <div class="filter-bar">
+          <input placeholder=" Search..." style="flex:1;min-width:180px"/>
+          <select class="form-control" style="width:130px"><option>All Status</option><option>Submitted</option><option>Under Review</option><option>Approved</option><option>Rejected</option><option>Implemented</option></select>
+          <select class="form-control" style="width:130px"><option>All Depts</option><option>QA</option><option>Production</option><option>Safety</option><option>HR</option></select>
+          <select class="form-control" style="width:110px"><option>All Impact</option><option>Low</option><option>Medium</option><option>High</option></select>
+          <select class="form-control" style="width:100px"><option>2024</option><option>2023</option><option>2022</option></select>
+        </div>
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Submitter / Dept</th><th>Impact</th><th>Status</th><th>AI Score</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>#IDA-2024-053</td><td>Install LED lighting in warehouse</td><td>Arjun C / Production</td><td><span class="badge badge-medium">Medium</span></td><td><span class="badge badge-review">Under Review</span></td><td>78</td><td>1 Sep</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-053')">View</button></td></tr>
+            <tr><td>#IDA-2024-051</td><td>Automated safety checklist via QR</td><td>Yashas R / QA</td><td><span class="badge badge-high">High</span></td><td><span class="badge badge-review">Under Review</span></td><td>91</td><td>29 Aug</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-051')">View</button></td></tr>
+            <tr><td>#IDA-2024-049</td><td>Digital boards for target vs actual</td><td>Kiran D / Production</td><td><span class="badge badge-medium">Medium</span></td><td><span class="badge badge-review">Under Review</span></td><td>72</td><td>27 Aug</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-049')">View</button></td></tr>
+            <tr><td>#IDA-2024-042</td><td>Reduce rework in Q3 production line</td><td>Yashas R / QA</td><td><span class="badge badge-medium">Medium</span></td><td><span class="badge badge-approved">Approved</span></td><td>88</td><td>12 Aug</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-042')">View</button></td></tr>
+            <tr><td>#IDA-2024-038</td><td>Energy monitoring dashboard</td><td>Yashas R / QA</td><td><span class="badge badge-high">High</span></td><td><span class="badge badge-implemented">Implemented</span></td><td>95</td><td>5 Aug</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-038')">View</button></td></tr>
+            <tr><td>#IDA-2024-033</td><td>Cross-department tool sharing</td><td>Meena S / Safety</td><td><span class="badge badge-high">High</span></td><td><span class="badge badge-approved">Approved</span></td><td>80</td><td>20 Jul</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-033')">View</button></td></tr>
+            <tr><td>#IDA-2024-028</td><td>Buddy system for new joinees</td><td>Rahul M / Safety</td><td><span class="badge badge-low">Low</span></td><td><span class="badge badge-rejected">Rejected</span></td><td>55</td><td>18 Jun</td><td><button class="btn btn-outline btn-sm" onclick="openIdeaDetail('IDA-2024-028')">View</button></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:#888">
+          <span>Showing 7 of 48 ideas</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm">← Prev</button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-outline btn-sm">2</button>
+            <button class="btn btn-outline btn-sm">3</button>
+            <button class="btn btn-outline btn-sm">Next →</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-audit">
+        <div class="section-header">
+          <div class="page-title">System Audit Trail</div>
+          <div class="text-muted">Immutable append-only log of all workflow actions</div>
+        </div>
+        <div class="filter-bar">
+          <input placeholder="Filter by idea ID or actor..." style="flex:1"/>
+          <select class="form-control" style="width:140px"><option>All Actions</option><option>Approved</option><option>Rejected</option><option>Submitted</option><option>Implemented</option></select>
+          <select class="form-control" style="width:130px"><option>All Departments</option><option>QA</option><option>Production</option></select>
+        </div>
+        <div class="card">
+          <div style="font-size:11px;color:#e53935;background:#ffebee;padding:6px 10px;border-radius:4px;margin-bottom:12px">
+             This log is append-only and tamper-proof. No record can be edited or deleted.
+          </div>
+          <table>
+            <thead><tr><th>Timestamp</th><th>Idea ID</th><th>Action</th><th>From → To</th><th>Actor</th><th>Comment</th></tr></thead>
+            <tbody>
+              <tr><td>02 Sep 2024 09:14</td><td>#IDA-2024-042</td><td><span class="badge badge-approved">APPROVED</span></td><td>Under Review → Approved</td><td>Priya Sharma (Manager)</td><td>Strong quality improvement potential</td></tr>
+              <tr><td>01 Sep 2024 14:32</td><td>#IDA-2024-053</td><td><span class="badge badge-review">REVIEW STARTED</span></td><td>Submitted → Under Review</td><td>Priya Sharma (Manager)</td><td>—</td></tr>
+              <tr><td>01 Sep 2024 11:05</td><td>#IDA-2024-053</td><td><span class="badge badge-submitted">SUBMITTED</span></td><td>Draft → Submitted</td><td>Arjun Chopra (Employee)</td><td>—</td></tr>
+              <tr><td>30 Aug 2024 16:20</td><td>#IDA-2024-038</td><td><span class="badge badge-implemented">IMPLEMENTED</span></td><td>Approved → Implemented</td><td>BU Head (Ramesh B)</td><td>Deployed at Mysuru Plant 3</td></tr>
+              <tr><td>29 Aug 2024 10:00</td><td>#IDA-2024-051</td><td><span class="badge badge-submitted">SUBMITTED</span></td><td>Draft → Submitted</td><td>Yashas R (Employee)</td><td>—</td></tr>
+              <tr><td>18 Jun 2024 15:42</td><td>#IDA-2024-028</td><td><span class="badge badge-rejected">REJECTED</span></td><td>Under Review → Rejected</td><td>Priya Sharma (Manager)</td><td>Not aligned with Q3 priorities</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    
+      <div class="page" id="page-leaderboard">
+        <div class="section-header">
+          <div class="page-title"> Leaderboard & Gamification</div>
+        </div>
+        <div class="filter-bar">
+          <div class="chip-filter">
+            <div class="chip active" onclick="activateChip(this)">Monthly</div>
+            <div class="chip" onclick="activateChip(this)">Quarterly</div>
+            <div class="chip" onclick="activateChip(this)">Yearly</div>
+          </div>
+          <div class="chip-filter" style="margin-left:16px">
+            <div class="chip active" onclick="activateChip(this)">Individual</div>
+            <div class="chip" onclick="activateChip(this)">Department</div>
+            <div class="chip" onclick="activateChip(this)">Business Unit</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"> Individual Rankings — August 2024</div>
+            <div class="lb-row"><div class="lb-rank rank-1">1</div><div class="avatar" style="background:#3f51b5">YR</div><div style="flex:1"><div class="lb-name">Yashas R <span style="font-size:11px;color:#fb8c00">⭐ You</span></div><div class="lb-dept">QA Dept</div><div class="progress-bar mt-8"><div class="progress-fill" style="width:100%"></div></div></div><div><div class="lb-points">185 pts</div><div class="lb-ideas">6 ideas</div></div></div>
+            <div class="lb-row"><div class="lb-rank rank-2">2</div><div class="avatar" style="background:#e91e63">AC</div><div style="flex:1"><div class="lb-name">Arjun Chopra</div><div class="lb-dept">Production Dept</div><div class="progress-bar mt-8"><div class="progress-fill" style="width:86%"></div></div></div><div><div class="lb-points">160 pts</div><div class="lb-ideas">5 ideas</div></div></div>
+            <div class="lb-row"><div class="lb-rank rank-3">3</div><div class="avatar" style="background:#009688">MS</div><div style="flex:1"><div class="lb-name">Meena S</div><div class="lb-dept">Safety Dept</div><div class="progress-bar mt-8"><div class="progress-fill" style="width:75%"></div></div></div><div><div class="lb-points">140 pts</div><div class="lb-ideas">4 ideas</div></div></div>
+            <div class="lb-row"><div class="lb-rank rank-n">4</div><div class="avatar" style="background:#795548">RM</div><div style="flex:1"><div class="lb-name">Rahul Mehta</div><div class="lb-dept">Safety Dept</div><div class="progress-bar mt-8"><div class="progress-fill" style="width:59%"></div></div></div><div><div class="lb-points">110 pts</div><div class="lb-ideas">3 ideas</div></div></div>
+            <div class="lb-row"><div class="lb-rank rank-n">5</div><div class="avatar" style="background:#607d8b">KD</div><div style="flex:1"><div class="lb-name">Kiran D</div><div class="lb-dept">Production Dept</div><div class="progress-bar mt-8"><div class="progress-fill" style="width:54%"></div></div></div><div><div class="lb-points">100 pts</div><div class="lb-ideas">3 ideas</div></div></div>
+          </div>
+
+          <div>
+       
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-title"> Your Points Summary</div>
+              <div style="display:flex;gap:10px;margin-bottom:12px">
+                <div class="mini-stat"><div class="mini-stat-val">185</div><div class="mini-stat-label">This Month</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">520</div><div class="mini-stat-label">This Quarter</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">1,240</div><div class="mini-stat-label">This Year</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">#1</div><div class="mini-stat-label">Rank (Monthly)</div></div>
+              </div>
+              <div class="card-title" style="margin-top:8px">Points History</div>
+              <table>
+                <thead><tr><th>Event</th><th>Idea</th><th>Points</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr><td> Approved</td><td>#IDA-2024-042</td><td style="color:#2e7d32;font-weight:700">+25 pts</td><td>2 Sep</td></tr>
+                  <tr><td> High Impact Bonus</td><td>#IDA-2024-042</td><td style="color:#2e7d32;font-weight:700">+10 pts</td><td>2 Sep</td></tr>
+                  <tr><td> Submitted</td><td>#IDA-2024-051</td><td style="color:#2e7d32;font-weight:700">+10 pts</td><td>29 Aug</td></tr>
+                  <tr><td> AI Score Bonus (91)</td><td>#IDA-2024-051</td><td style="color:#2e7d32;font-weight:700">+15 pts</td><td>29 Aug</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+  
+            <div class="card">
+              <div class="card-title"> Your Badges</div>
+              <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <div style="text-align:center;padding:10px;background:#fff8e1;border-radius:8px;width:80px;cursor:pointer" title="First Idea: Submitted your first idea">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#f57f17;font-weight:600;margin-top:4px">First Idea</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:#e3f2fd;border-radius:8px;width:80px;cursor:pointer" title="Quick Thinker: 3 ideas in one month">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#1565c0;font-weight:600;margin-top:4px">Quick Thinker</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:#e8f5e9;border-radius:8px;width:80px;cursor:pointer" title="Innovator: 5 ideas approved">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#2e7d32;font-weight:600;margin-top:4px">Innovator</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:#f3e5f5;border-radius:8px;width:80px;cursor:pointer" title="Change Maker: 1 idea implemented">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#6a1b9a;font-weight:600;margin-top:4px">Change Maker</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:#f5f5f5;border-radius:8px;width:80px;opacity:0.4" title="Locked: Team Player — 5 collaborative ideas">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#888;font-weight:600;margin-top:4px">Team Player</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:#f5f5f5;border-radius:8px;width:80px;opacity:0.4" title="Locked: Safety Champion — 3 safety ideas">
+                  <div style="font-size:24px"></div>
+                  <div style="font-size:10px;color:#888;font-weight:600;margin-top:4px">Safety Champ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-analytics">
+        <div class="section-header">
+          <div class="page-title"> Analytics Dashboard</div>
+          <div style="display:flex;gap:8px">
+            <select class="form-control" style="width:100px"><option>2024</option><option>2023</option></select>
+            <button class="btn btn-outline btn-sm" onclick="alert('Exporting Excel report via Apache POI...\nFile: IdeationReport_2024.xlsx')"> Export Excel</button>
+            <button class="btn btn-outline btn-sm" onclick="alert('Generating PDF report via JasperReports...\nFile: IdeationReport_2024.pdf')"> Export PDF</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-val">48</div><div class="kpi-label">Total Ideas</div><div class="kpi-delta">▲ +12% vs 2023 (43)</div></div>
+          <div class="kpi-card" style="border-left-color:#43a047"><div class="kpi-val">64.6%</div><div class="kpi-label">Approval Rate</div><div class="kpi-delta">▲ +5% vs last year</div></div>
+          <div class="kpi-card" style="border-left-color:#f57c00"><div class="kpi-val">39.6%</div><div class="kpi-label">Implementation Rate</div><div class="kpi-delta">▲ +8% vs last year</div></div>
+          <div class="kpi-card" style="border-left-color:#7b1fa2"><div class="kpi-val">24 / 62</div><div class="kpi-label">Participation Rate</div><div class="kpi-delta">38.7% of total staff</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"> Department-wise Ideas</div>
+            <div class="bar-chart">
+              <div class="bar-row"><span class="bar-label" style="width:100px">QA Dept</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:#3f51b5"></div></div><span class="bar-val">14</span></div>
+              <div class="bar-row"><span class="bar-label" style="width:100px">Production</span><div class="bar-track"><div class="bar-fill" style="width:75%;background:#5c6bc0"></div></div><span class="bar-val">12</span></div>
+              <div class="bar-row"><span class="bar-label" style="width:100px">Safety</span><div class="bar-track"><div class="bar-fill" style="width:58%;background:#7986cb"></div></div><span class="bar-val">9</span></div>
+              <div class="bar-row"><span class="bar-label" style="width:100px">Engineering</span><div class="bar-track"><div class="bar-fill" style="width:45%;background:#9fa8da"></div></div><span class="bar-val">7</span></div>
+              <div class="bar-row"><span class="bar-label" style="width:100px">HR / Admin</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:#c5cae9"></div></div><span class="bar-val">4</span></div>
+              <div class="bar-row"><span class="bar-label" style="width:100px">Others</span><div class="bar-track"><div class="bar-fill" style="width:13%;background:#e8eaf6"></div></div><span class="bar-val">2</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"> Year-over-Year Comparison</div>
+            <table>
+              <thead><tr><th>Metric</th><th>2022</th><th>2023</th><th>2024 (YTD)</th></tr></thead>
+              <tbody>
+                <tr><td>Total Ideas</td><td>28</td><td>43</td><td style="font-weight:700;color:#1a237e">48</td></tr>
+                <tr><td>Approved</td><td>16</td><td>27</td><td style="font-weight:700;color:#2e7d32">31</td></tr>
+                <tr><td>Implemented</td><td>7</td><td>13</td><td style="font-weight:700;color:#6a1b9a">19</td></tr>
+                <tr><td>Contributors</td><td>14</td><td>19</td><td style="font-weight:700;color:#1a237e">24</td></tr>
+                <tr><td>Avg AI Quality Score</td><td>—</td><td>—</td><td style="font-weight:700;color:#1a237e">81.4</td></tr>
+              </tbody>
+            </table>
+            <div class="alert alert-success mt-8"> 2024 shows consistent growth across all metrics. Implementation rate improved by 8% vs 2023.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"> Workflow Funnel — 2024</div>
+          <div style="display:flex;align-items:flex-end;justify-content:center;gap:0;height:120px;padding:0 20px">
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div style="width:100%;background:#3f51b5;height:120px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">48</div><div style="font-size:11px;color:#666;margin-top:4px;text-align:center">Submitted</div></div>
+            <div style="width:2px;background:#ddd;height:120px"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div style="width:100%;background:#5c6bc0;height:98px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">44</div><div style="font-size:11px;color:#666;margin-top:4px;text-align:center">Reviewed</div></div>
+            <div style="width:2px;background:#ddd;height:120px"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div style="width:100%;background:#43a047;height:77px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">31</div><div style="font-size:11px;color:#666;margin-top:4px;text-align:center">Approved</div></div>
+            <div style="width:2px;background:#ddd;height:120px"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div style="width:100%;background:#7b1fa2;height:47px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">19</div><div style="font-size:11px;color:#666;margin-top:4px;text-align:center">Implemented</div></div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-admin">
+        <div class="section-header">
+          <div class="page-title"> Admin Panel</div>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'atab1')"> Users</div>
+          <div class="tab" onclick="switchTab(this,'atab2')"> Departments</div>
+          <div class="tab" onclick="switchTab(this,'atab3')"> Points Config</div>
+          <div class="tab" onclick="switchTab(this,'atab4')"> HR Sync</div>
+        </div>
+        <div class="tab-content active" id="atab1">
+          <div class="section-header">
+            <span></span>
+            <button class="btn btn-primary btn-sm"> Add User</button>
+          </div>
+          <table>
+            <thead><tr><th>Employee</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="width:28px;height:28px;font-size:11px">YR</div>Yashas R</div></td><td>yashas.r@company.com</td><td>QA Dept</td><td><span class="badge badge-employee">Employee</span></td><td><span class="badge badge-approved">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="alert('Role Management: Assign MANAGER/DEPT_HEAD/BU_HEAD/ADMIN/EXECUTIVE roles\nCurrent: EMPLOYEE')">Edit Role</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#e91e63;width:28px;height:28px;font-size:11px">PS</div>Priya Sharma</div></td><td>priya.s@company.com</td><td>QA Dept</td><td><span class="badge badge-manager">Manager</span></td><td><span class="badge badge-approved">Active</span></td><td><button class="btn btn-outline btn-sm">Edit Role</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#009688;width:28px;height:28px;font-size:11px">BK</div>Bhuvan K H</div></td><td>bhuvan.k@company.com</td><td>IT / Admin</td><td><span class="badge badge-admin">Admin</span></td><td><span class="badge badge-approved">Active</span></td><td><button class="btn btn-outline btn-sm">Edit Role</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="background:#795548;width:28px;height:28px;font-size:11px">AC</div>Adrish Chowdhury</div></td><td>adrish.c@company.com</td><td>Executive</td><td><span class="badge" style="background:#e3f2fd;color:#1565c0">Executive</span></td><td><span class="badge badge-approved">Active</span></td><td><button class="btn btn-outline btn-sm">Edit Role</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="atab2">
+          <table>
+            <thead><tr><th>Department</th><th>Head</th><th>BU</th><th>Staff Count</th><th>Ideas Count</th></tr></thead>
+            <tbody>
+              <tr><td>QA Department</td><td>Priya Sharma</td><td>Mysuru Plant</td><td>18</td><td>14</td></tr>
+              <tr><td>Production Department</td><td>Ramesh B</td><td>Mysuru Plant</td><td>24</td><td>12</td></tr>
+              <tr><td>Safety & Environment</td><td>Meena S</td><td>Mysuru Plant</td><td>10</td><td>9</td></tr>
+              <tr><td>Engineering</td><td>Kiran D</td><td>Mysuru Plant</td><td>15</td><td>7</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="atab3">
+          <div class="alert alert-info">All point values are configurable. Changes take effect for new events only.</div>
+          <table>
+            <thead><tr><th>Event</th><th>Current Points</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td> Idea Submitted</td><td><input class="form-control" value="10" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+              <tr><td> Idea Approved</td><td><input class="form-control" value="25" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+              <tr><td> Idea Implemented</td><td><input class="form-control" value="50" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+              <tr><td> High Impact Bonus</td><td><input class="form-control" value="50" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+              <tr><td> AI Score &gt; 80 Bonus</td><td><input class="form-control" value="15" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+              <tr><td> Co-Suggester</td><td><input class="form-control" value="5" style="width:80px;display:inline"/></td><td><button class="btn btn-success btn-sm" onclick="alert('Points config saved!')">Save</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="atab4">
+          <div class="alert alert-info">Employee data is synced from the HR Database daily at 02:00 IST. You can trigger a manual sync below.</div>
+          <div class="card" style="max-width:480px">
+            <div class="card-title">HR Database Sync Status</div>
+            <div style="font-size:13px;line-height:2">
+              <div> <strong>Last Sync:</strong> 02 Sep 2024, 02:00 IST</div>
+              <div> <strong>Status:</strong> Successful</div>
+              <div> <strong>Records Synced:</strong> 62 employees</div>
+              <div> <strong>Next Scheduled:</strong> 03 Sep 2024, 02:00 IST</div>
+            </div>
+            <button class="btn btn-primary mt-8" onclick="alert('Manual HR sync triggered!\nThis will pull latest employee data from the HR database.\nEstimated time: 30 seconds.')"> Trigger Manual Sync</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="page" id="page-profile">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"> Employee Profile</div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+              <div class="avatar" id="profile-avatar" style="width:60px;height:60px;font-size:22px;border-radius:50%">YR</div>
+              <div>
+                <div style="font-size:18px;font-weight:700;color:#1a237e" id="profile-name">Yashas R</div>
+                <div style="font-size:12px;color:#666">EMP-2021-0341</div>
+                <span class="badge badge-employee" id="profile-role">Employee</span>
+              </div>
+            </div>
+            <table style="font-size:13px">
+              <tr><td style="color:#888;padding:5px 0">Department</td><td>QA Department</td></tr>
+              <tr><td style="color:#888;padding:5px 0">Email</td><td>yashas.r@company.com</td></tr>
+              <tr><td style="color:#888;padding:5px 0">Phone</td><td>+91 98765 43210</td></tr>
+              <tr><td style="color:#888;padding:5px 0">Reporting To</td><td>Priya Sharma (Manager)</td></tr>
+              <tr><td style="color:#888;padding:5px 0">Business Unit</td><td>Mysuru Plant</td></tr>
+              <tr><td style="color:#888;padding:5px 0">Joined</td><td>March 2021</td></tr>
+            </table>
+            <div class="separator"></div>
+            <div style="font-size:11px;color:#888">🔗 Auto-fetched from HR Database. Contact Admin to update.</div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-title"> My Stats</div>
+              <div style="display:flex;gap:10px">
+                <div class="mini-stat"><div class="mini-stat-val">6</div><div class="mini-stat-label">Ideas Submitted</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">4</div><div class="mini-stat-label">Approved</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">2</div><div class="mini-stat-label">Implemented</div></div>
+                <div class="mini-stat"><div class="mini-stat-val">1,240</div><div class="mini-stat-label">Total Points</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title"> Badges (4 / 9 earned)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <div style="text-align:center;padding:8px;background:#fff8e1;border-radius:8px;width:70px"><div style="font-size:20px"></div><div style="font-size:10px;color:#f57f17;font-weight:600">First Idea</div></div>
+                <div style="text-align:center;padding:8px;background:#e3f2fd;border-radius:8px;width:70px"><div style="font-size:20px"></div><div style="font-size:10px;color:#1565c0;font-weight:600">Quick Thinker</div></div>
+                <div style="text-align:center;padding:8px;background:#e8f5e9;border-radius:8px;width:70px"><div style="font-size:20px"></div><div style="font-size:10px;color:#2e7d32;font-weight:600">Innovator</div></div>
+                <div style="text-align:center;padding:8px;background:#f3e5f5;border-radius:8px;width:70px"><div style="font-size:20px"></div><div style="font-size:10px;color:#6a1b9a;font-weight:600">Change Maker</div></div>
+                <div style="text-align:center;padding:8px;background:#f5f5f5;border-radius:8px;width:70px;opacity:.4"><div style="font-size:20px"></div><div style="font-size:10px;color:#888">5 more...</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+
+<div class="modal-overlay" id="modal-idea-detail">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <div>
+        <span class="text-muted" style="font-size:11px">#IDA-2024-051</span>
+        <div class="modal-title">Automated safety checklist before shift start using QR scan</div>
+      </div>
+      <span class="modal-close" onclick="closeModal('modal-idea-detail')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <span class="badge badge-review"> Under Review</span>
+        <span class="badge badge-high">High Impact</span>
+        <span class="tag"> Safety</span><span class="tag"> Environment</span>
+        <span class="points-badge">AI Score: 91/100</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'dtab1')">Details</div>
+        <div class="tab" onclick="switchTab(this,'dtab2')">Workflow Timeline</div>
+        <div class="tab" onclick="switchTab(this,'dtab3')">AI Analysis</div>
+        <div class="tab" onclick="switchTab(this,'dtab4')">Attachments</div>
+      </div>
+
+      <div class="tab-content active" id="dtab1">
+        <div class="form-group">
+          <label> Submitted By</label>
+          <div style="font-size:13px">Yashas R (EMP-2021-0341) · QA Dept · Mysuru Plant</div>
+        </div>
+        <div class="form-group">
+          <label> Co-Suggesters</label>
+          <div style="font-size:13px">Rahul Mehta (EMP-2022-0187) · Safety Dept</div>
+        </div>
+        <div class="form-group">
+          <label> Present Situation</label>
+          <div style="font-size:13px;background:#f8f9fe;padding:10px;border-radius:5px;border-left:3px solid #3f51b5">
+            Currently, safety checklists before each shift are done manually on paper forms. This leads to incomplete entries, delays in shift start, and difficulty in tracking compliance. Missing entries are only noticed during audits, by which time it is too late to take corrective action.
+          </div>
+        </div>
+        <div class="form-group">
+          <label> Proposed Solution</label>
+          <div style="font-size:13px;background:#f8f9fe;padding:10px;border-radius:5px;border-left:3px solid #43a047">
+            Implement a QR-code based digital safety checklist accessible via any smartphone. Each workstation gets a QR sticker. Workers scan before shift start; form auto-submits with timestamp. Non-compliance alerts supervisor instantly. Data stored centrally for real-time compliance tracking.
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label> Tangible Benefit</label><div style="font-size:13px">₹45,000 / year</div></div>
+          <div><label> Submitted On</label><div style="font-size:13px">29 August 2024</div></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="dtab2">
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot tl-dot-blue"></div>
+            <div class="tl-body">
+              <div class="tl-title">Idea Submitted</div>
+              <div class="tl-meta">by Yashas R · 29 Aug 2024, 10:00 AM</div>
+              <div class="tl-comment">Status changed: Draft → Submitted. AI analysis triggered automatically.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot tl-dot-orange"></div>
+            <div class="tl-body">
+              <div class="tl-title">Under Review — Assigned to Priya Sharma (Manager)</div>
+              <div class="tl-meta">System auto-assigned · 29 Aug 2024, 10:02 AM</div>
+              <div class="tl-comment">Routing: HIGH impact → Manager review required first. Email notification sent.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot tl-dot-blue"></div>
+            <div class="tl-body">
+              <div class="tl-title">Viewed by Reviewer</div>
+              <div class="tl-meta">Priya Sharma opened the idea · 30 Aug 2024, 09:15 AM</div>
+            </div>
+          </div>
+          <div class="tl-item" style="opacity:.5">
+            <div class="tl-dot" style="background:#f5f5f5;color:#bbb;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center"></div>
+            <div class="tl-body">
+              <div class="tl-title" style="color:#bbb">Awaiting Manager Decision</div>
+              <div class="tl-meta">Next step: Approve / Reject / Escalate</div>
+            </div>
+          </div>
+          <div class="tl-item" style="opacity:.3">
+            <div class="tl-dot" style="background:#f5f5f5;color:#bbb;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center"></div>
+            <div class="tl-body">
+              <div class="tl-title" style="color:#bbb">Dept Head Review (if approved by Manager)</div>
+              <div class="tl-meta">High impact: requires Dept Head approval too</div>
+            </div>
+          </div>
+          <div class="tl-item" style="opacity:.3">
+            <div class="tl-dot" style="background:#f5f5f5;color:#bbb;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center"></div>
+            <div class="tl-body">
+              <div class="tl-title" style="color:#bbb">BU Head Final Approval</div>
+              <div class="tl-meta">Final stage for HIGH impact ideas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="dtab3">
+        <div class="ai-panel">
+          <div class="ai-panel-title"> AI Analysis Results — Powered by GPT-4o</div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+            <div class="score-circle">91</div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#1a237e">Quality Score: 91 / 100</div>
+              <div style="font-size:12px;color:#555">Excellent. Well-articulated problem and solution.</div>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-bottom:12px">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:6px"> Strengths</div>
+              <div style="font-size:12px;line-height:1.8;color:#555">
+                • Clear problem statement<br/>
+                • Feasible, low-cost solution<br/>
+                • Quantifiable safety benefit<br/>
+                • Leverages existing smartphones
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:6px"> Suggestions</div>
+              <div style="font-size:12px;line-height:1.8;color:#555">
+                • Add pilot department plan<br/>
+                • Quantify compliance % improvement<br/>
+                • Mention app platform (iOS/Android)
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:4px"> AI Benefit Estimate</div>
+            <div style="font-size:12px;color:#555">Estimated savings: ₹40,000–60,000/year. Incident reduction: 30–50%. Compliance improvement: 65% → 95%+.</div>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:4px"> Duplicate Detection</div>
+            <div style="font-size:12px;color:#2e7d32"> No duplicate ideas found. Similarity score < 85% against all existing ideas.</div>
+          </div>
+          <div style="font-size:10px;color:#9fa8da;margin-top:8px">Analyzed by: GPT-4o (text-embedding-3-small for embeddings) · 29 Aug 2024, 10:28 AM</div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="dtab4">
+        <div style="color:#888;font-size:13px;text-align:center;padding:30px">
+          📎 No attachments uploaded for this idea.<br/>
+          <span style="font-size:11px">Supported: PDF, PNG, JPG, XLSX (max 10 MB each)</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" id="idea-detail-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-idea-detail')">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-review">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <span class="text-muted" style="font-size:11px" id="review-id">#IDA-2024-051</span>
+        <div class="modal-title" id="review-title">Review Idea</div>
+      </div>
+      <span class="modal-close" onclick="closeModal('modal-review')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info">📋 <strong>Routing:</strong> HIGH impact idea — your approval routes to Dept Head next.</div>
+      <div class="form-group">
+        <label>Review Summary</label>
+        <div style="font-size:13px;background:#f8f9fe;padding:10px;border-radius:5px;border-left:3px solid #3f51b5;margin-bottom:4px">
+          <strong>Idea:</strong> Automated safety checklist before shift start using QR scan<br/>
+          <strong>Submitter:</strong> Yashas R · QA Dept<br/>
+          <strong>Impact:</strong>  Safety,  Environment · HIGH level<br/>
+          <strong>AI Score:</strong> 91/100
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your Decision <span style="color:red">*</span></label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="decision" value="approve" checked/>  Approve</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="decision" value="reject"/>  Reject</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="radio" name="decision" value="escalate"/>  Escalate</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Comment <span style="color:red">*</span> (required for rejection)</label>
+        <textarea class="form-control" rows="3" placeholder="Add your review comments...">Strong safety improvement. QR-based implementation is practical and low-cost. Recommend approving with full implementation plan required.</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-review')">Cancel</button>
+      <button class="btn btn-success" onclick="submitReview()">Submit Decision</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-success">
+  <div class="modal" style="width:400px;text-align:center">
+    <div class="modal-body" style="padding:30px">
+      <div style="font-size:48px;margin-bottom:12px" id="success-icon">🎉</div>
+      <div style="font-size:18px;font-weight:700;color:#1a237e;margin-bottom:8px" id="success-title">Idea Submitted!</div>
+      <div style="font-size:13px;color:#555;margin-bottom:16px" id="success-msg">Your idea has been submitted successfully and is now in review.</div>
+      <div class="ai-panel" style="text-align:left;margin-bottom:16px">
+        <div class="ai-panel-title"> AI Analysis Running...</div>
+        <div style="font-size:12px;color:#555">Quality scoring, duplicate detection, and benefit estimation will complete within 30 seconds. Check the idea detail page for results.</div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeModal('modal-success');navigate('my-ideas',null)">View My Ideas →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+let currentRole = 'employee';
+let currentUser = { name: 'Yashas R', initials: 'YR', role: 'Employee' };
+let currentStep = 1;
+let totalSteps = 5;
+let aiTimer = null;
+
+
+function selectRole(el, role, name, roleName) {
+  document.querySelectorAll('.role-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  currentRole = role;
+  const emails = { employee:'yashas.r@company.com', manager:'priya.sharma@company.com', admin:'bhuvan.k@company.com', executive:'adrish.c@company.com' };
+  document.getElementById('login-email').value = emails[role];
+  currentUser = { name, initials: name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2), role: roleName };
+}
+
+function doLogin() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  applyRole();
+}
+
+function applyRole() {
+  const { name, initials, role } = currentUser;
+  ['sb-avatar','top-avatar','profile-avatar'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=initials; });
+  document.getElementById('sb-name').textContent = name;
+  document.getElementById('sb-role').textContent = role;
+  document.getElementById('top-name').textContent = name;
+  document.getElementById('top-role-badge').textContent = role;
+  if(document.getElementById('profile-name')) document.getElementById('profile-name').textContent = name;
+  if(document.getElementById('profile-role')) document.getElementById('profile-role').textContent = role;
+
+  const isAdmin = currentRole === 'admin';
+  const isManager = ['manager','admin','executive'].includes(currentRole);
+  const isEmployee = currentRole === 'employee';
+
+  document.getElementById('nav-review').style.display = (isManager || !isEmployee) ? '' : '';
+  document.getElementById('nav-admin').style.display = isAdmin ? '' : 'none';
+  document.getElementById('nav-admin-section').style.display = isAdmin ? '' : 'none';
+  document.getElementById('nav-analytics').style.display = !isEmployee ? '' : '';
+
+
+  if (!isManager && !isAdmin) {
+    document.getElementById('nav-review').querySelector('span:last-child').textContent = 'Review Queue';
+  }
+}
+
+function logout() {
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.querySelectorAll('.role-option').forEach(e => e.classList.remove('selected'));
+  document.querySelectorAll('.role-option')[0].classList.add('selected');
+  currentRole = 'employee';
+  currentUser = { name: 'Yashas R', initials: 'YR', role: 'Employee' };
+}
+
+
+function navigate(page, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  const titles = { dashboard:'Dashboard', 'my-ideas':'My Ideas', submit:'Submit New Idea', review:'Review Queue', 'ideas-all':'All Ideas', audit:'Audit Trail', leaderboard:'Leaderboard & Gamification', analytics:'Analytics Dashboard', admin:'Admin Panel', profile:'My Profile' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+
+function markAllRead() {
+  document.getElementById('notif-count').style.display = 'none';
+  document.querySelectorAll('.notif-item').forEach(n => n.classList.remove('unread'));
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.topbar-right')) {
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+});
+
+
+function goStep(n) {
+
+  for (let i = 1; i <= totalSteps; i++) {
+    const el = document.getElementById('step-' + i);
+    if (el) el.style.display = 'none';
+  }
+  document.getElementById('step-' + n).style.display = 'block';
+
+
+  document.querySelectorAll('.w-step').forEach((s, idx) => {
+    s.classList.remove('active', 'done');
+    if (idx + 1 < n) s.classList.add('done');
+    else if (idx + 1 === n) s.classList.add('active');
+  });
+
+  currentStep = n;
+  const wizNav = document.getElementById('wizard-nav');
+  const btnBack = document.getElementById('btn-back');
+  const btnNext = document.getElementById('btn-next');
+
+  if (n === totalSteps) {
+    wizNav.style.display = 'none';
+  } else {
+    wizNav.style.display = 'flex';
+    btnBack.style.visibility = n > 1 ? 'visible' : 'hidden';
+    btnNext.textContent = n === 4 ? 'Review →' : 'Next →';
+  }
+}
+
+function nextStep() { if (currentStep < totalSteps) goStep(currentStep + 1); }
+function prevStep() { if (currentStep > 1) goStep(currentStep - 1); }
+
+function triggerAIHint() {
+  clearTimeout(aiTimer);
+  document.getElementById('ai-hint-panel').style.display = 'none';
+  aiTimer = setTimeout(() => {
+    document.getElementById('ai-hint-panel').style.display = 'block';
+  }, 2000);
+}
+
+function toggleImpact(el) { el.classList.toggle('selected'); }
+
+function submitIdea() {
+  closeModal('modal-idea-detail');
+  document.getElementById('modal-success').classList.add('open');
+  document.getElementById('success-icon').textContent = '🎉';
+  document.getElementById('success-title').textContent = 'Idea Submitted Successfully!';
+  document.getElementById('success-msg').textContent = 'Idea #IDA-2024-055 has been submitted. Routed to Priya Sharma (Manager) for review. +10 points credited!';
+}
+
+
+function openIdeaDetail(id) {
+  const data = {
+    'IDA-2024-042': { title: 'Reduce rework percentage in Q3 production line', status: 'badge-approved', statusText: 'Approved', isManager: false },
+    'IDA-2024-051': { title: 'Automated safety checklist before shift start using QR scan', status: 'badge-review', statusText: 'Under Review', isManager: ['manager','admin'].includes(currentRole) },
+    'IDA-2024-053': { title: 'Install LED lighting in warehouse to reduce energy cost', status: 'badge-review', statusText: 'Under Review', isManager: ['manager','admin'].includes(currentRole) },
+    'IDA-2024-035': { title: 'Energy monitoring dashboard for all machines on shopfloor', status: 'badge-implemented', statusText: 'Implemented', isManager: false },
+    'IDA-2024-038': { title: 'Energy monitoring dashboard for all machines on shopfloor', status: 'badge-implemented', statusText: 'Implemented', isManager: false },
+    'IDA-2024-028': { title: 'Introduce buddy system for new joinees onboarding', status: 'badge-rejected', statusText: 'Rejected', isManager: false },
+    'IDA-2024-033': { title: 'Cross-department tool sharing system', status: 'badge-approved', statusText: 'Approved', isManager: false },
+    'IDA-2024-049': { title: 'Digital display boards for real-time production target vs actual', status: 'badge-review', statusText: 'Under Review', isManager: false },
+  };
+  const d = data[id] || data['IDA-2024-051'];
+  
+  const footer = document.getElementById('idea-detail-footer');
+  if (d.isManager) {
+    footer.innerHTML = `
+      <button class="btn btn-outline" onclick="closeModal('modal-idea-detail')">Close</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('modal-idea-detail');openReviewModal('${id}')">❌ Reject</button>
+      <button class="btn btn-success" onclick="closeModal('modal-idea-detail');openReviewModal('${id}')">✅ Approve / Review</button>`;
+  } else {
+    footer.innerHTML = `<button class="btn btn-outline" onclick="closeModal('modal-idea-detail')">Close</button>`;
+  }
+  document.getElementById('modal-idea-detail').classList.add('open');
+  document.querySelectorAll('#modal-idea-detail .tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#modal-idea-detail .tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('dtab1').classList.add('active');
+  document.querySelectorAll('#modal-idea-detail .tab')[0].classList.add('active');
+}
+
+function openReviewModal(id) {
+  document.getElementById('review-id').textContent = '#' + id;
+  document.getElementById('modal-review').classList.add('open');
+}
+
+function submitReview() {
+  closeModal('modal-review');
+  document.getElementById('modal-success').classList.add('open');
+  document.getElementById('success-icon').textContent = '✅';
+  document.getElementById('success-title').textContent = 'Decision Submitted!';
+  document.getElementById('success-msg').textContent = 'Your review has been recorded. The submitter has been notified by email. Audit trail updated.';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+
+function switchTab(tabEl, contentId) {
+  const container = tabEl.closest('.card, .page, .modal-body');
+  if (!container) return;
+  container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  const content = document.getElementById(contentId);
+  if (content) content.classList.add('active');
+}
+
+function activateChip(el) {
+  const group = el.closest('.chip-filter');
+  if (!group) return;
+  group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
